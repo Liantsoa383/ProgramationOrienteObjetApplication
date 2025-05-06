@@ -1,0 +1,167 @@
+/* RegisterPage.css */
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .register-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 400px;
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .register-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .register-header h2 {
+    font-size: 24px;
+    color: #333;
+  }
+  
+  .register-header p {
+    color: #666;
+    margin: 5px 0 20px;
+  }
+  
+  .steps-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+  }
+  
+  .step {
+    width: 30px;
+    height: 30px;
+    background: #e0e0e0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    transition: background 0.3s;
+  }
+  
+  .step.active {
+    background: #007bff;
+  }
+  
+  .step-line {
+    flex-grow: 1;
+    height: 4px;
+    background: #e0e0e0;
+    align-self: center;
+    position: relative;
+  }
+  
+  .register-error {
+    color: red;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  
+  .register-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: border-color 0.3s;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+  
+  .input-error {
+    border-color: red;
+  }
+  
+  .error-message {
+    color: red;
+    font-size: 12px;
+    margin-top: 5px;
+  }
+  
+  .next-button,
+  .back-button,
+  .register-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .next-button:hover,
+  .back-button:hover,
+  .register-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .terms-checkbox {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+  }
+  
+  .terms-checkbox input {
+    margin-right: 10px;
+  }
+  
+  .register-footer {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .login-link {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .login-link:hover {
+    text-decoration: underline;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }  

@@ -1,0 +1,183 @@
+/* frontend/src/pages/AboutPage.css */
+.about-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f5f7fa;
+  }
+  
+  .about-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .about-section h1 {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 15px;
+  }
+  
+  .about-intro {
+    margin-bottom: 40px;
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+  
+  .mission-vision {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+  }
+  
+  .mission, .vision {
+    padding: 25px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .mission {
+    border-left: 4px solid #3498db;
+  }
+  
+  .vision {
+    border-left: 4px solid #2ecc71;
+  }
+  
+  .mission:hover, .vision:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .mission h2, .vision h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: #2c3e50;
+  }
+  
+  .about-features {
+    margin-bottom: 40px;
+  }
+  
+  .about-features h2 {
+    font-size: 2rem;
+    margin-bottom: 25px;
+    color: #2c3e50;
+  }
+  
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+  }
+  
+  .feature-card {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+    border-top: 4px solid #3498db;
+  }
+  
+  .feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .feature-card i {
+    font-size: 2.5rem;
+    color: #3498db;
+    margin-bottom: 15px;
+  }
+  
+  .feature-card h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+  }
+  
+  .feature-card p {
+    color: #7f8c8d;
+    font-size: 0.95rem;
+  }
+  
+  .about-team {
+    margin-bottom: 40px;
+    padding: 25px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .about-team h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: #2c3e50;
+  }
+  
+  .contact-info {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .contact-info h2 {
+    color: #ecf0f1;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+  }
+  
+  .contact-info p {
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+  }
+  
+  .contact-info i {
+    margin-right: 10px;
+    color: #3498db;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .about-section h1 {
+      font-size: 2rem;
+    }
+    
+    .mission-vision {
+      grid-template-columns: 1fr;
+    }
+    
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .about-intro {
+      font-size: 1rem;
+    }
+  }
