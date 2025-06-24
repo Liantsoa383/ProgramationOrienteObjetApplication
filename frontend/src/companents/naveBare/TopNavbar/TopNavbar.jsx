@@ -49,10 +49,7 @@ const TopNavbar = () => {
         </div>
 
         <div className="navbar-actions">
-          <div className="auth-buttons">
-            <Link to="/login" className="nav-btn login-btn">Connexion</Link>
-            <Link to="/register" className="nav-btn register-btn">Inscription</Link>
-          </div>
+         
 
           <div className="profile-dropdown">
             <button className="profile-btn" onClick={toggleProfileMenu}>

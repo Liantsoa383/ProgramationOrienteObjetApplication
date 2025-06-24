@@ -3,10 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './LoginPage.css';
 
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '', // Correspond au backend qui utilise username
     password: '',
     rememberMe: false
   });
@@ -33,10 +34,8 @@ const LoginPage = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.email) {
-      newErrors.email = 'L\'email est obligatoire';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Format d\'email invalide';
+    if (!formData.username) {
+      newErrors.username = 'Le nom d\'utilisateur est obligatoire';
     }
     
     if (!formData.password) {
@@ -55,28 +54,90 @@ const LoginPage = () => {
       setLoginError('');
       
       try {
-        // Remplacez cette URL par votre API de connexion réelle
-        const response = await axios.post('http://localhost:8080/api/auth/login', {
-          email: formData.email,
-          password: formData.password
+        console.log({
+          email: formData.username,
+          motDePasse: formData.password
+        })
+        // Appel à l'endpoint d'authentification de votre backend
+        const response = await axios.post('http://localhost:8080/api/auth/connexion', {
+          email: formData.username,
+          motDePasse: formData.password
         });
         
-        // Stockage du token dans le localStorage ou sessionStorage
-        const token = response.data.token;
-        if (formData.rememberMe) {
-          localStorage.setItem('authToken', token);
-        } else {
-          sessionStorage.setItem('authToken', token);
+        // Gestion de la réponse selon la structure de votre backend
+        const { token, user, refreshToken, accessToken } = response.data;
+        
+        // Stockage du token principal (token ou accessToken selon votre implémentation)
+        const authToken = token || accessToken;
+        if (authToken) {
+          if (formData.rememberMe) {
+            localStorage.setItem('authToken', authToken);
+          } else {
+            sessionStorage.setItem('authToken', authToken);
+          }
         }
         
-        // Redirection vers la page d'accueil ou le tableau de bord
-        navigate('/');
+        // Stockage du refresh token s'il existe
+        if (refreshToken) {
+          if (formData.rememberMe) {
+            localStorage.setItem('refreshToken', refreshToken);
+          } else {
+            sessionStorage.setItem('refreshToken', refreshToken);
+          }
+        }
+        
+        // Stockage des informations utilisateur
+        if (user) {
+          const userData = JSON.stringify(user);
+          if (formData.rememberMe) {
+            localStorage.setItem('userData', userData);
+          } else {
+            sessionStorage.setItem('userData', userData);
+          }
+        }
+        
+        // Configuration d'axios pour les futures requêtes
+        if (authToken) {
+          axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        // Redirection vers la page d'accueil (garde votre logique originale)
+        navigate('/home');
+        
       } catch (error) {
         console.error('Erreur de connexion:', error);
-        if (error.response && error.response.data && error.response.data.message) {
-          setLoginError(error.response.data.message);
+        
+        // Gestion des erreurs spécifiques à votre backend
+        if (error.response) {
+          const { status, data } = error.response;
+          
+          switch (status) {
+            case 401:
+              setLoginError('Nom d\'utilisateur ou mot de passe incorrect');
+              break;
+            case 403:
+              setLoginError('Votre compte est désactivé. Contactez l\'administrateur.');
+              break;
+            case 404:
+              setLoginError('Utilisateur non trouvé');
+              break;
+            case 429:
+              setLoginError('Trop de tentatives de connexion. Veuillez réessayer plus tard.');
+              break;
+            case 500:
+              setLoginError('Erreur serveur. Veuillez réessayer plus tard.');
+              break;
+            default:
+              if (data && data.message) {
+                setLoginError(data.message);
+              } else {
+                setLoginError('Erreur de connexion. Veuillez vérifier vos identifiants et réessayer.');
+              }
+          }
+        } else if (error.request) {
+          setLoginError('Impossible de contacter le serveur. Vérifiez votre connexion internet.');
         } else {
-          setLoginError('Erreur de connexion. Veuillez réessayer.');
+          setLoginError('Erreur de connexion. Veuillez vérifier vos identifiants et réessayer.');
         }
       } finally {
         setLoading(false);
@@ -96,17 +157,17 @@ const LoginPage = () => {
         
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="username">Nom d'utilisateur</label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              className={errors.email ? 'input-error' : ''}
-              placeholder="Entrez votre email"
+              className={errors.username ? 'input-error' : ''}
+              placeholder="Entrez votre nom d'utilisateur"
             />
-            {errors.email && <span className="error-message">{errors.email}</span>}
+            {errors.username && <span className="error-message">{errors.username}</span>}
           </div>
           
           <div className="form-group">

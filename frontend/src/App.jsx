@@ -11,6 +11,8 @@ import LoginPage from './pages/LoginPage/LoginPage';
 import RegisterPage from './pages/RegisterPage/RegisterPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
 import SettingsPage from './pages/SettingsPage/SettingsPage';
+import Bienvenue from './pages/BienvenuePage/Bienvenue';
+import GestionUtilisateurs from './pages/GestionUtilisateurs/GestionUtilisateurs';
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -33,9 +35,10 @@ function App() {
     
       <div className="App">
         <Routes>
-          {/* Route principale pour la page d'accueil */}
-          <Route path="/" element={<HomePage messages={messages} loading={loading} />} />
           
+          {/* Route principale pour la page d'accueil */}
+          <Route path='/' element={<Bienvenue/>}/>
+          <Route path="/home" element={<HomePage  />} />
           {/* Routes pour les pages du menu principal */}
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -44,7 +47,7 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
 
           {/* Routes pour M1 Télécommunications */}
-          <Route path="/telecom/users" element={<div>Gestion des utilisateurs</div>} />
+          <Route path="/telecom/users" element={<GestionUtilisateurs/>} />
           <Route path="/telecom/schedules" element={<div>Gestion des répartitions</div>} />
           <Route path="/telecom/hardware" element={<div>Gestion des matériels informatiques</div>} />
           <Route path="/telecom/practicals" element={<div>Gestion des travaux pratiques</div>} />
