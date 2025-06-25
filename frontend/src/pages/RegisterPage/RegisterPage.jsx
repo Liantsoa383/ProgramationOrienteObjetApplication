@@ -7,17 +7,27 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    // Champs correspondant au backend
+    prenom: '',
+    nom: '',
     email: '',
-    phone: '',
+    telephone: '',
+    username: '',
     password: '',
-    confirmPassword: '',
-    role: 'student', // Par défaut: student, teacher, admin
-    studentId: '',
-    department: '',
-    level: '',
-    acceptTerms: false
+    confirmPassword: '', // Champ pour la validation (pas dans le backend)
+    roles: new Set(['ETUDIANT']), // Set pour correspondre au backend
+    acceptTerms: false, // Pour validation côté client seulement
+    
+    // Champs spécifiques pour les étudiants
+    numMatricule: '',
+    dateNaissance: '',
+    lieuNaissance: '',
+    filiereCode: '',
+    niveau: null,
+    
+    // Champs spécifiques pour les enseignants
+    specialite: '',
+    grade: ''
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -25,11 +35,20 @@ const RegisterPage = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value
-    });
-   
+    
+    if (name === 'roles') {
+      // Gérer roles comme un Set pour correspondre au backend
+      setFormData({
+        ...formData,
+        [name]: new Set([value])
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: type === 'checkbox' ? checked : value
+      });
+    }
+
     // Clear error when user starts typing again
     if (errors[name]) {
       setErrors({
@@ -41,34 +60,38 @@ const RegisterPage = () => {
 
   const validateStep1 = () => {
     const newErrors = {};
-   
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'Le prénom est obligatoire';
+
+    if (!formData.prenom.trim()) {
+      newErrors.prenom = 'Le prénom est obligatoire';
     }
-   
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Le nom est obligatoire';
+
+    if (!formData.nom.trim()) {
+      newErrors.nom = 'Le nom est obligatoire';
     }
-   
+
     if (!formData.email) {
       newErrors.email = 'L\'email est obligatoire';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Format d\'email invalide';
     }
-   
-    if (!formData.phone) {
-      newErrors.phone = 'Le numéro de téléphone est obligatoire';
-    } else if (!/^[0-9+\s-]{8,15}$/.test(formData.phone)) {
-      newErrors.phone = 'Format de téléphone invalide';
+
+    if (!formData.telephone) {
+      newErrors.telephone = 'Le numéro de téléphone est obligatoire';
+    } else if (!/^[0-9+\s-]{8,15}$/.test(formData.telephone)) {
+      newErrors.telephone = 'Format de téléphone invalide';
     }
-   
+
+    if (!formData.username.trim()) {
+      newErrors.username = 'Le nom d\'utilisateur est obligatoire';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep2 = () => {
     const newErrors = {};
-   
+
     if (!formData.password.trim()) {
       newErrors.password = 'Le mot de passe est obligatoire';
     } else if (formData.password.length < 8) {
@@ -76,31 +99,50 @@ const RegisterPage = () => {
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
       newErrors.password = 'Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre';
     }
-   
+
     if (!formData.confirmPassword.trim()) {
       newErrors.confirmPassword = 'La confirmation du mot de passe est obligatoire';
     } else if (formData.confirmPassword !== formData.password) {
       newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
     }
-   
-    if (formData.role === 'student') {
-      if (!formData.studentId.trim()) {
-        newErrors.studentId = 'Le numéro étudiant est obligatoire';
+
+    // Vérification des champs spécifiques selon le rôle
+    const userRole = Array.from(formData.roles)[0]; // Convertir Set en Array pour récupérer la première valeur
+    
+    if (userRole === 'ETUDIANT') {
+      if (!formData.numMatricule.trim()) {
+        newErrors.numMatricule = 'Le numéro de matricule est obligatoire';
       }
      
-      if (!formData.department.trim()) {
-        newErrors.department = 'Le département est obligatoire';
+      if (!formData.filiereCode.trim()) {
+        newErrors.filiereCode = 'La filière est obligatoire';
       }
      
-      if (!formData.level.trim()) {
-        newErrors.level = 'Le niveau est obligatoire';
+      if (!formData.niveau) {
+        newErrors.niveau = 'Le niveau est obligatoire';
+      }
+      
+      if (!formData.dateNaissance) {
+        newErrors.dateNaissance = 'La date de naissance est obligatoire';
+      }
+      
+      if (!formData.lieuNaissance.trim()) {
+        newErrors.lieuNaissance = 'Le lieu de naissance est obligatoire';
+      }
+    } else if (userRole === 'ENSEIGNANT') {
+      if (!formData.specialite.trim()) {
+        newErrors.specialite = 'La spécialité est obligatoire';
+      }
+      
+      if (!formData.grade.trim()) {
+        newErrors.grade = 'Le grade est obligatoire';
       }
     }
-   
+
     if (!formData.acceptTerms) {
       newErrors.acceptTerms = 'Vous devez accepter les conditions d\'utilisation';
     }
-   
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -117,13 +159,38 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-   
+
     if (validateStep2()) {
       setLoading(true);
       setRegisterError('');
-     
+      
       try {
-        const response = await axios.post('http://localhost:8080/api/auth/register', formData);
+        // Conversion du Set en Array pour l'envoi au backend (JSON ne supporte pas les Sets)
+        const requestData = {
+          username: formData.username,
+          motDePasse: formData.password,
+          nom: formData.nom,
+          prenom: formData.prenom,
+          email: formData.email,
+          telephone: formData.telephone,
+          role: Array.from(formData.roles)[0], // Convertir Set en Array pour JSON
+        };
+        
+        // Ajout des champs spécifiques en fonction du rôle
+        const userRole = Array.from(formData.roles)[0]; // Convertir Set en Array pour récupérer la première valeur
+        if (userRole === 'ETUDIANT') {
+          requestData.numMatricule = formData.numMatricule;
+          requestData.dateNaissance = formData.dateNaissance ? new Date(formData.dateNaissance) : null;
+          requestData.lieuNaissance = formData.lieuNaissance;
+          requestData.filiereCode = formData.filiereCode;
+          requestData.niveau = parseInt(formData.niveau, 10);
+        } else if (userRole === 'ENSEIGNANT') {
+          requestData.specialite = formData.specialite;
+          requestData.grade = formData.grade;
+        }
+        
+        // URL CORRIGÉE pour correspondre au contrôleur backend
+        const response = await axios.post('http://localhost:8080/api/auth/inscription', requestData);
        
         navigate('/login', {
           state: {
@@ -149,7 +216,7 @@ const RegisterPage = () => {
         <div className="register-header">
           <h2>Créer un compte</h2>
           <p>Rejoignez notre système de gestion de scolarité</p>
-         
+          
           <div className="steps-indicator">
             <div className={`step ${step >= 1 ? 'active' : ''}`}>1</div>
             <div className="step-line"></div>
@@ -159,37 +226,51 @@ const RegisterPage = () => {
        
         {registerError && <div className="register-error">{registerError}</div>}
        
-        <form onSubmit={step === 1 ? nextStep : handleSubmit} className="register-form">
+        <form onSubmit={handleSubmit} className="register-form">
           {step === 1 ? (
             <>
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="firstName">Prénom</label>
+                  <label htmlFor="prenom">Prénom</label>
                   <input
                     type="text"
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
+                    id="prenom" 
+                    name="prenom" 
+                    value={formData.prenom}
                     onChange={handleChange}
-                    className={errors.firstName ? 'input-error' : ''}
+                    className={errors.prenom ? 'input-error' : ''}
                     placeholder="Entrez votre prénom"
                   />
-                  {errors.firstName && <span className="error-message">{errors.firstName}</span>}
+                  {errors.prenom && <span className="error-message">{errors.prenom}</span>}
                 </div>
                
                 <div className="form-group">
-                  <label htmlFor="lastName">Nom</label>
+                  <label htmlFor="nom">Nom</label>
                   <input
                     type="text"
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
+                    id="nom"
+                    name="nom"
+                    value={formData.nom}
                     onChange={handleChange}
-                    className={errors.lastName ? 'input-error' : ''}
+                    className={errors.nom ? 'input-error' : ''}
                     placeholder="Entrez votre nom"
                   />
-                  {errors.lastName && <span className="error-message">{errors.lastName}</span>}
+                  {errors.nom && <span className="error-message">{errors.nom}</span>}
                 </div>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="username">Nom d'utilisateur</label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className={errors.username ? 'input-error' : ''}
+                  placeholder="Choisissez un nom d'utilisateur"
+                />
+                {errors.username && <span className="error-message">{errors.username}</span>}
               </div>
              
               <div className="form-group">
@@ -207,33 +288,33 @@ const RegisterPage = () => {
               </div>
              
               <div className="form-group">
-                <label htmlFor="phone">Téléphone</label>
+                <label htmlFor="telephone">Téléphone</label>
                 <input
                   type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
+                  id="telephone"
+                  name="telephone"
+                  value={formData.telephone}
                   onChange={handleChange}
-                  className={errors.phone ? 'input-error' : ''}
+                  className={errors.telephone ? 'input-error' : ''}
                   placeholder="Entrez votre numéro de téléphone"
                 />
-                {errors.phone && <span className="error-message">{errors.phone}</span>}
+                {errors.telephone && <span className="error-message">{errors.telephone}</span>}
               </div>
              
               <div className="form-group">
-                <label htmlFor="role">Rôle</label>
+                <label htmlFor="roles">Rôle</label>
                 <select
-                  id="role"
-                  name="role"
-                  value={formData.role}
+                  id="roles"
+                  name="roles"
+                  value={Array.from(formData.roles)[0]}
                   onChange={handleChange}
                 >
-                  <option value="student">Étudiant</option>
-                  <option value="teacher">Enseignant</option>
-                  <option value="admin">Administrateur</option>
+                  <option value="ETUDIANT">Étudiant</option>
+                  <option value="ENSEIGNANT">Enseignant</option>
+                  <option value="ADMINISTRATEUR">Administrateur</option>
                 </select>
               </div>
-             
+              
               <button type="button" onClick={nextStep} className="next-button">
                 Suivant
               </button>
@@ -268,58 +349,121 @@ const RegisterPage = () => {
                 {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
               </div>
              
-              {formData.role === 'student' && (
+              {Array.from(formData.roles)[0] === 'ETUDIANT' && (
                 <>
                   <div className="form-group">
-                    <label htmlFor="studentId">Numéro étudiant</label>
+                    <label htmlFor="numMatricule">Numéro matricule</label>
                     <input
                       type="text"
-                      id="studentId"
-                      name="studentId"
-                      value={formData.studentId}
+                      id="numMatricule"
+                      name="numMatricule"
+                      value={formData.numMatricule}
                       onChange={handleChange}
-                      className={errors.studentId ? 'input-error' : ''}
-                      placeholder="Entrez votre numéro étudiant"
+                      className={errors.numMatricule ? 'input-error' : ''}
+                      placeholder="Entrez votre numéro matricule"
                     />
-                    {errors.studentId && <span className="error-message">{errors.studentId}</span>}
+                    {errors.numMatricule && <span className="error-message">{errors.numMatricule}</span>}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="dateNaissance">Date de naissance</label>
+                    <input
+                      type="date"
+                      id="dateNaissance"
+                      name="dateNaissance"
+                      value={formData.dateNaissance}
+                      onChange={handleChange}
+                      className={errors.dateNaissance ? 'input-error' : ''}
+                    />
+                    {errors.dateNaissance && <span className="error-message">{errors.dateNaissance}</span>}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="lieuNaissance">Lieu de naissance</label>
+                    <input
+                      type="text"
+                      id="lieuNaissance"
+                      name="lieuNaissance"
+                      value={formData.lieuNaissance}
+                      onChange={handleChange}
+                      className={errors.lieuNaissance ? 'input-error' : ''}
+                      placeholder="Entrez votre lieu de naissance"
+                    />
+                    {errors.lieuNaissance && <span className="error-message">{errors.lieuNaissance}</span>}
                   </div>
                  
                   <div className="form-row">
                     <div className="form-group">
-                      <label htmlFor="department">Département</label>
+                      <label htmlFor="filiereCode">Filière</label>
                       <select
-                        id="department"
-                        name="department"
-                        value={formData.department}
+                        id="filiereCode"
+                        name="filiereCode"
+                        value={formData.filiereCode}
                         onChange={handleChange}
-                        className={errors.department ? 'input-error' : ''}
+                        className={errors.filiereCode ? 'input-error' : ''}
                       >
                         <option value="">Sélectionnez</option>
-                        <option value="telecom">Télécommunications et réseaux</option>
-                        <option value="electronics">Électronique</option>
-                        <option value="computer">Informatique</option>
+                        <option value="TR">Télécommunications et réseaux</option>
+                        <option value="EL">Électronique</option>
+                        <option value="INF">Informatique</option>
                       </select>
-                      {errors.department && <span className="error-message">{errors.department}</span>}
+                      {errors.filiereCode && <span className="error-message">{errors.filiereCode}</span>}
                     </div>
                    
                     <div className="form-group">
-                      <label htmlFor="level">Niveau</label>
+                      <label htmlFor="niveau">Niveau</label>
                       <select
-                        id="level"
-                        name="level"
-                        value={formData.level}
+                        id="niveau"
+                        name="niveau"
+                        value={formData.niveau}
                         onChange={handleChange}
-                        className={errors.level ? 'input-error' : ''}
+                        className={errors.niveau ? 'input-error' : ''}
                       >
                         <option value="">Sélectionnez</option>
-                        <option value="l1">Licence 1</option>
-                        <option value="l2">Licence 2</option>
-                        <option value="l3">Licence 3</option>
-                        <option value="m1">Master 1</option>
-                        <option value="m2">Master 2</option>
+                        <option value="1">Licence 1</option>
+                        <option value="2">Licence 2</option>
+                        <option value="3">Licence 3</option>
+                        <option value="4">Master 1</option>
+                        <option value="5">Master 2</option>
                       </select>
-                      {errors.level && <span className="error-message">{errors.level}</span>}
+                      {errors.niveau && <span className="error-message">{errors.niveau}</span>}
                     </div>
+                  </div>
+                </>
+              )}
+              
+              {Array.from(formData.roles)[0] === 'ENSEIGNANT' && (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="specialite">Spécialité</label>
+                    <input
+                      type="text"
+                      id="specialite"
+                      name="specialite"
+                      value={formData.specialite}
+                      onChange={handleChange}
+                      className={errors.specialite ? 'input-error' : ''}
+                      placeholder="Entrez votre spécialité"
+                    />
+                    {errors.specialite && <span className="error-message">{errors.specialite}</span>}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="grade">Grade</label>
+                    <select
+                      id="grade"
+                      name="grade"
+                      value={formData.grade}
+                      onChange={handleChange}
+                      className={errors.grade ? 'input-error' : ''}
+                    >
+                      <option value="">Sélectionnez</option>
+                      <option value="Assistant">Assistant</option>
+                      <option value="Maître-Assistant">Maître-Assistant</option>
+                      <option value="Maître de Conférences">Maître de Conférences</option>
+                      <option value="Professeur">Professeur</option>
+                    </select>
+                    {errors.grade && <span className="error-message">{errors.grade}</span>}
                   </div>
                 </>
               )}

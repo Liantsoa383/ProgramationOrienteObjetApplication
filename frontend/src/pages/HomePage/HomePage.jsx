@@ -8,6 +8,7 @@ import { FaUsers, FaLaptop, FaWifi, FaNetworkWired, FaBook, FaFileAlt, FaProject
 import { Chart as ChartJS } from 'chart.js/auto';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import houseIsstm from '../../image/houseIsstm.jpg';
+import axios from 'axios';
 
 const HomePage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -21,6 +22,13 @@ const HomePage = () => {
     projetsEnCours: 15
   });
 
+  useEffect(()=>{
+    const fetchData = async()=>{
+      const res = await axios.get("http://localhost:8080/api/utilisateurs/stats");
+      setStats({...stats,etudiants:res.data.totalEtudiants,enseignants:res.data.totalEnseignants})
+    }
+    fetchData()
+  },[])
   // Données pour les graphiques
   const utilisationMaterielData = {
     labels: ['Ordinateurs', 'Vidéoprojecteurs', 'Bornes WiFi', 'Switches'],

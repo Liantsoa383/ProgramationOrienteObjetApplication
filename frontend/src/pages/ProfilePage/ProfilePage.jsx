@@ -11,12 +11,12 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    prenom: '',
+    nom: '',
     email: '',
-    phone: '',
-    department: '',
-    level: '',
+    telephone: '',
+    filiere: '',
+    niveau: '',
     address: '',
     birthDate: '',
     bio: ''
@@ -32,7 +32,7 @@ const ProfilePage = () => {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [activities, setActivities] = useState([]);
 
-  // Simuler la récupération des données utilisateur
+  // Récupération des données utilisateur
   useEffect(() => {
     const fetchUserData = async () => {
       // Vérifier si l'utilisateur est connecté (token)
@@ -45,28 +45,31 @@ const ProfilePage = () => {
      
       try {
         setLoading(true);
-        // Remplacez cette URL par votre API réelle
-        const response = await axios.get('http://localhost:8080/api/user/profile', {
+        // API de récupération du profil utilisateur
+        const response = await axios.get('/api/utilisateur/profile', {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
        
-        setUserData(response.data);
+        const user = response.data;
+        setUserData(user);
+        
+        // Adapter les noms de champs pour correspondre au backend
         setFormData({
-          firstName: response.data.firstName || '',
-          lastName: response.data.lastName || '',
-          email: response.data.email || '',
-          phone: response.data.phone || '',
-          department: response.data.department || '',
-          level: response.data.level || '',
-          address: response.data.address || '',
-          birthDate: response.data.birthDate || '',
-          bio: response.data.bio || ''
+          prenom: user.prenom || '',
+          nom: user.nom || '',
+          email: user.email || '',
+          telephone: user.telephone || '',
+          filiere: user.filiere || '',
+          niveau: user.niveau || '',
+          address: user.address || '',
+          birthDate: user.birthDate || '',
+          bio: user.bio || ''
         });
        
-        // Simuler la récupération des activités récentes
-        const activitiesResponse = await axios.get('http://localhost:8080/api/user/activities', {
+        // Récupération des activités récentes
+        const activitiesResponse = await axios.get('/api/utilisateur/activities', {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -126,12 +129,12 @@ const ProfilePage = () => {
   const validateProfileForm = () => {
     const errors = {};
    
-    if (!formData.firstName.trim()) {
-      errors.firstName = 'Le prénom est obligatoire';
+    if (!formData.prenom.trim()) {
+      errors.prenom = 'Le prénom est obligatoire';
     }
    
-    if (!formData.lastName.trim()) {
-      errors.lastName = 'Le nom est obligatoire';
+    if (!formData.nom.trim()) {
+      errors.nom = 'Le nom est obligatoire';
     }
    
     if (!formData.email) {
@@ -140,8 +143,8 @@ const ProfilePage = () => {
       errors.email = 'Format d\'email invalide';
     }
    
-    if (formData.phone && !/^[0-9+\s-]{8,15}$/.test(formData.phone)) {
-      errors.phone = 'Format de téléphone invalide';
+    if (formData.telephone && !/^[0-9+\s-]{8,15}$/.test(formData.telephone)) {
+      errors.telephone = 'Format de téléphone invalide';
     }
    
     if (formData.birthDate) {
@@ -189,8 +192,22 @@ const ProfilePage = () => {
      
       try {
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        // Remplacez cette URL par votre API réelle
-        await axios.put('http://localhost:8080/api/user/profile', formData, {
+        
+        // Adaptation des noms de champs pour le backend
+        const profileData = {
+          prenom: formData.prenom,
+          nom: formData.nom,
+          email: formData.email,
+          telephone: formData.telephone,
+          filiere: formData.filiere,
+          niveau: formData.niveau,
+          address: formData.address,
+          birthDate: formData.birthDate,
+          bio: formData.bio
+        };
+        
+        // Appel API pour mettre à jour le profil
+        await axios.put('/api/utilisateur/update', profileData, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -228,8 +245,9 @@ const ProfilePage = () => {
      
       try {
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        // Remplacez cette URL par votre API réelle
-        await axios.put('http://localhost:8080/api/user/password', {
+        
+        // Appel API pour changer le mot de passe
+        await axios.put('/api/utilisateur/changePassword', {
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword
         }, {
@@ -267,12 +285,12 @@ const ProfilePage = () => {
     // Reset form data to original values
     if (userData) {
       setFormData({
-        firstName: userData.firstName || '',
-        lastName: userData.lastName || '',
+        prenom: userData.prenom || '',
+        nom: userData.nom || '',
         email: userData.email || '',
-        phone: userData.phone || '',
-        department: userData.department || '',
-        level: userData.level || '',
+        telephone: userData.telephone || '',
+        filiere: userData.filiere || '',
+        niveau: userData.niveau || '',
         address: userData.address || '',
         birthDate: userData.birthDate || '',
         bio: userData.bio || ''
@@ -281,6 +299,39 @@ const ProfilePage = () => {
    
     setEditMode(false);
     setFormErrors({});
+  };
+
+  // Fonction pour convertir les rôles en type d'utilisateur lisible
+  const getUserRole = (roles) => {
+    if (!roles) return 'Utilisateur';
+    if (roles.includes('ROLE_ETUDIANT')) return 'Étudiant';
+    if (roles.includes('ROLE_ENSEIGNANT')) return 'Enseignant';
+    if (roles.includes('ROLE_ADMIN')) return 'Administrateur';
+    return 'Utilisateur';
+  };
+
+  // Fonction pour convertir la filière en texte lisible
+  const getFiliereText = (filiere) => {
+    if (!filiere) return '';
+    switch(filiere.toLowerCase()) {
+      case 'telecom': return 'Télécommunications et réseaux';
+      case 'electronics': return 'Électronique';
+      case 'computer': return 'Informatique';
+      default: return filiere;
+    }
+  };
+
+  // Fonction pour convertir le niveau en texte lisible
+  const getNiveauText = (niveau) => {
+    if (!niveau) return '';
+    switch(niveau) {
+      case 1: return 'Licence 1';
+      case 2: return 'Licence 2';
+      case 3: return 'Licence 3';
+      case 4: return 'Master 1';
+      case 5: return 'Master 2';
+      default: return `Niveau ${niveau}`;
+    }
   };
 
   if (loading && !userData) {
@@ -306,21 +357,14 @@ const ProfilePage = () => {
     <div className="profile-container">
       <div className="profile-header">
         <div className="profile-avatar">
-          {userData?.firstName?.charAt(0)}{userData?.lastName?.charAt(0)}
+          {userData?.prenom?.charAt(0)}{userData?.nom?.charAt(0)}
         </div>
         <div className="profile-title">
-          <h1>{userData?.firstName} {userData?.lastName}</h1>
-          <p>{userData?.role === 'student' ? 'Étudiant' : userData?.role === 'teacher' ? 'Enseignant' : 'Administrateur'}</p>
-          {userData?.role === 'student' && (
+          <h1>{userData?.prenom} {userData?.nom}</h1>
+          <p>{getUserRole(userData?.roles)}</p>
+          {userData?.roles?.includes('ROLE_ETUDIANT') && (
             <span className="student-info">
-              {userData?.department === 'telecom' ? 'Télécommunications et réseaux' :
-               userData?.department === 'electronics' ? 'Électronique' :
-               userData?.department === 'computer' ? 'Informatique' : userData?.department} -
-              {userData?.level === 'l1' ? 'Licence 1' :
-               userData?.level === 'l2' ? 'Licence 2' :
-               userData?.level === 'l3' ? 'Licence 3' :
-               userData?.level === 'm1' ? 'Master 1' :
-               userData?.level === 'm2' ? 'Master 2' : userData?.level}
+              {getFiliereText(userData?.filiere)} - {getNiveauText(userData?.niveau)}
             </span>
           )}
         </div>
@@ -364,11 +408,11 @@ const ProfilePage = () => {
                     <div className="info-grid">
                       <div className="info-item">
                         <span className="info-label">Prénom</span>
-                        <span className="info-value">{userData?.firstName}</span>
+                        <span className="info-value">{userData?.prenom}</span>
                       </div>
                       <div className="info-item">
                         <span className="info-label">Nom</span>
-                        <span className="info-value">{userData?.lastName}</span>
+                        <span className="info-value">{userData?.nom}</span>
                       </div>
                       <div className="info-item">
                         <span className="info-label">Email</span>
@@ -376,36 +420,42 @@ const ProfilePage = () => {
                       </div>
                       <div className="info-item">
                         <span className="info-label">Téléphone</span>
-                        <span className="info-value">{userData?.phone || 'Non renseigné'}</span>
+                        <span className="info-value">{userData?.telephone || 'Non renseigné'}</span>
                       </div>
                     </div>
                   </div>
                  
-                  {userData?.role === 'student' && (
+                  {userData?.roles?.includes('ROLE_ETUDIANT') && (
                     <div className="info-section">
                       <h3>Informations académiques</h3>
                       <div className="info-grid">
                         <div className="info-item">
                           <span className="info-label">Numéro étudiant</span>
-                          <span className="info-value">{userData?.studentId}</span>
+                          <span className="info-value">{userData?.numMatricule}</span>
                         </div>
                         <div className="info-item">
-                          <span className="info-label">Département</span>
-                          <span className="info-value">
-                            {userData?.department === 'telecom' ? 'Télécommunications et réseaux' :
-                             userData?.department === 'electronics' ? 'Électronique' :
-                             userData?.department === 'computer' ? 'Informatique' : userData?.department}
-                          </span>
+                          <span className="info-label">Filière</span>
+                          <span className="info-value">{getFiliereText(userData?.filiere)}</span>
                         </div>
                         <div className="info-item">
                           <span className="info-label">Niveau</span>
-                          <span className="info-value">
-                            {userData?.level === 'l1' ? 'Licence 1' :
-                             userData?.level === 'l2' ? 'Licence 2' :
-                             userData?.level === 'l3' ? 'Licence 3' :
-                             userData?.level === 'm1' ? 'Master 1' :
-                             userData?.level === 'm2' ? 'Master 2' : userData?.level}
-                          </span>
+                          <span className="info-value">{getNiveauText(userData?.niveau)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {userData?.roles?.includes('ROLE_ENSEIGNANT') && (
+                    <div className="info-section">
+                      <h3>Informations professionnelles</h3>
+                      <div className="info-grid">
+                        <div className="info-item">
+                          <span className="info-label">Spécialité</span>
+                          <span className="info-value">{userData?.specialite || 'Non renseignée'}</span>
+                        </div>
+                        <div className="info-item">
+                          <span className="info-label">Grade</span>
+                          <span className="info-value">{userData?.grade || 'Non renseigné'}</span>
                         </div>
                       </div>
                     </div>
@@ -452,29 +502,29 @@ const ProfilePage = () => {
                     <h4>Informations de base</h4>
                     <div className="form-row">
                       <div className="form-group">
-                        <label htmlFor="firstName">Prénom</label>
+                        <label htmlFor="prenom">Prénom</label>
                         <input
                           type="text"
-                          id="firstName"
-                          name="firstName"
-                          value={formData.firstName}
+                          id="prenom"
+                          name="prenom"
+                          value={formData.prenom}
                           onChange={handleInputChange}
-                          className={formErrors.firstName ? 'input-error' : ''}
+                          className={formErrors.prenom ? 'input-error' : ''}
                         />
-                        {formErrors.firstName && <span className="error-message">{formErrors.firstName}</span>}
+                        {formErrors.prenom && <span className="error-message">{formErrors.prenom}</span>}
                       </div>
                      
                       <div className="form-group">
-                        <label htmlFor="lastName">Nom</label>
+                        <label htmlFor="nom">Nom</label>
                         <input
                           type="text"
-                          id="lastName"
-                          name="lastName"
-                          value={formData.lastName}
+                          id="nom"
+                          name="nom"
+                          value={formData.nom}
                           onChange={handleInputChange}
-                          className={formErrors.lastName ? 'input-error' : ''}
+                          className={formErrors.nom ? 'input-error' : ''}
                         />
-                        {formErrors.lastName && <span className="error-message">{formErrors.lastName}</span>}
+                        {formErrors.nom && <span className="error-message">{formErrors.nom}</span>}
                       </div>
                     </div>
                    
@@ -493,16 +543,16 @@ const ProfilePage = () => {
                       </div>
                      
                       <div className="form-group">
-                        <label htmlFor="phone">Téléphone</label>
+                        <label htmlFor="telephone">Téléphone</label>
                         <input
                           type="tel"
-                          id="phone"
-                          name="phone"
-                          value={formData.phone}
+                          id="telephone"
+                          name="telephone"
+                          value={formData.telephone}
                           onChange={handleInputChange}
-                          className={formErrors.phone ? 'input-error' : ''}
+                          className={formErrors.telephone ? 'input-error' : ''}
                         />
-                        {formErrors.phone && <span className="error-message">{formErrors.phone}</span>}
+                        {formErrors.telephone && <span className="error-message">{formErrors.telephone}</span>}
                       </div>
                     </div>
                   </div>
@@ -657,10 +707,10 @@ const ProfilePage = () => {
                   {activities.map((activity, index) => (
                     <div key={index} className="activity-item">
                       <div className="activity-icon">
-                        {activity.type === 'login' ? '🔐' :
-                         activity.type === 'profile_update' ? '✏️' :
-                         activity.type === 'password_change' ? '🔑' :
-                         activity.type === 'document_upload' ? '📁' : '🔔'}
+                        {activity.type === 'LOGIN' ? '🔐' :
+                         activity.type === 'PROFILE_UPDATE' ? '✏️' :
+                         activity.type === 'PASSWORD_CHANGE' ? '🔑' :
+                         activity.type === 'DOCUMENT_UPLOAD' ? '📁' : '🔔'}
                       </div>
                       <div className="activity-details">
                         <p className="activity-description">{activity.description}</p>
